@@ -1,8 +1,14 @@
 pipeline {
     agent any
     tools{
-        maven 'maven_3_5_0'
+        maven 'maven_3_8_4'
     }
+	environment {
+        dotenv '.env'
+        KUBECONFIG = "${KUBECONFIG_PATH}"
+        DOCKERHUB_CREDENTIALS = "${DOCKERHUB_CREDENTIALS}"
+    }
+
     stages{
         stage('Build Maven'){
             steps{
@@ -13,25 +19,25 @@ pipeline {
         stage('Build docker image'){
             steps{
                 script{
-                    sh 'docker build -t MuneebHoda/devops-integration .'
+                    sh 'docker build -t usmanghanibawany/devops-integration .'
                 }
             }
         }
         stage('Push image to Hub'){
             steps{
                 script{
-                   withCredentials([string(credentialsId: 'dockerhub-pwd', variable: 'dockerhubpwd')]) {
-                   sh 'docker login -u MuneebHoda -p ${dockerhubpwd}'
+                   withCredentials([string(credentialsId: 'env.DOCKERHUB_CREDENTIALS', variable: 'dockerhubpwd')]) {
+                   sh 'docker login -u usmanghanibawany -p ${dockerhubpwd}'
 
 }
-                   sh 'docker push MuneebHoda/devops-integration'
+                   sh 'docker push usmanghanibawany/devops-integration'
                 }
             }
         }
         stage('Deploy to k8s'){
             steps{
                 script{
-                    kubernetesDeploy (configs: 'deploymentservice.yaml',kubeconfigId: 'k8sconfigpwd')
+                    kubernetesDeploy (configs: 'deploymentservice.yaml',kubeconfigId: 'env.KUBECONFIG')
                 }
             }
         }
